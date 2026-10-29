@@ -1,9 +1,11 @@
 import type { PendingUpdate } from "../api";
+import type { DictKey, Language } from "../i18n";
 import type { SdStatusCard } from "./sd-status-card";
 import type { SdUpdateCard } from "./sd-update-card";
 import type { SdUpstreamDialog } from "./sd-upstream-dialog";
 import { applyUpdate, checkUpdate, moduleVersion, readStatus } from "../api";
 import { messageOf } from "../errors";
+import { currentLanguage, LANG_EVENT, msg, setLanguage, t } from "../i18n";
 import { notify } from "../notify";
 import { currentTheme, initTheme, toggleTheme } from "../theme";
 import { requireElement } from "./dom";
@@ -15,11 +17,11 @@ import "./sd-status-card";
 import "./sd-update-card";
 import "./sd-upstream-dialog";
 
-const FAIL_REASONS: Partial<Record<number, string>> = {
-    1: "安装参数无效（版本、URL 或 sha256）。",
-    2: "下载失败，请检查网络。",
-    3: "驱动校验失败（sha256 不匹配）。",
-    4: "写入失败，请检查存储空间与权限。",
+const FAIL_REASONS: Partial<Record<number, DictKey>> = {
+    1: "update.fail.1",
+    2: "update.fail.2",
+    3: "update.fail.3",
+    4: "update.fail.4",
 };
 
 /*
@@ -50,6 +52,11 @@ export class SdApp extends HTMLElement {
         });
         this.syncTheme(themeButton);
 
+        this.initLanguageBar();
+        document.addEventListener(LANG_EVENT, () => {
+            this.syncTheme(themeButton);
+        });
+
         requireElement<HTMLButtonElement>(this, "#refresh-status")
             .addEventListener("click", () => void this.refreshStatus());
 
@@ -64,6 +71,15 @@ export class SdApp extends HTMLElement {
 
         void this.refreshStatus();
         this.autoCheck();
+    }
+
+    // 底部语言选择：跟随系统 / English / Русский / 简体中文
+    private initLanguageBar(): void {
+        const select = requireElement<HTMLSelectElement>(this, "#language");
+        select.value = currentLanguage();
+        select.addEventListener("change", () => {
+            setLanguage(select.value as Language);
+        });
     }
 
     // 打开页面时自动查一次。10 分钟内重复打开不重复请求，
@@ -88,7 +104,7 @@ export class SdApp extends HTMLElement {
 
     private syncTheme(button: HTMLButtonElement): void {
         const mode = currentTheme();
-        const label = mode === "dark" ? "切换到浅色" : "切换到深色";
+        const label = t(mode === "dark" ? "theme.toLight" : "theme.toDark");
 
         // 图标显示的是"点一下会切到哪"，具体图标由 CSS 按 .dark 选择
         button.title = label;
@@ -104,13 +120,13 @@ export class SdApp extends HTMLElement {
         catch (error) {
             const message = messageOf(error);
             card.setError(message);
-            notify(`读取状态失败：${message}`);
+            notify(t("app.readStatusFailed", { message }));
         }
     }
 
     private async detectUpdate(): Promise<void> {
         const card = requireElement<SdUpdateCard>(this, "sd-update-card");
-        card.setBusy("正在查询上游…");
+        card.setBusy(msg("update.busyCheck"));
 
         try {
             const result = await checkUpdate();
@@ -127,11 +143,11 @@ export class SdApp extends HTMLElement {
             }
 
             this.pending = null;
-            card.setNote(`检测失败：${result.message}`);
+            card.setNote(msg("update.checkFailed", { message: result.message }));
         }
         catch (error) {
             this.pending = null;
-            card.setNote(`检测失败：${messageOf(error)}`);
+            card.setNote(msg("update.checkFailed", { message: messageOf(error) }));
         }
     }
 
@@ -145,7 +161,7 @@ export class SdApp extends HTMLElement {
 
         const update = this.pending;
         const card = requireElement<SdUpdateCard>(this, "sd-update-card");
-        card.setBusy("正在下载并校验…");
+        card.setBusy(msg("update.busyDownload"));
 
         try {
             const result = await applyUpdate(update);
@@ -153,13 +169,13 @@ export class SdApp extends HTMLElement {
             if (result.ok) {
                 this.pending = null;
                 await this.refreshStatus();
-                card.setNote("更新完成，重启后生效。");
-                notify("更新完成，重启后生效");
+                card.setNote(msg("update.done"));
+                notify(t("update.doneToast"));
                 return;
             }
 
-            notify("更新失败");
-            card.setFailed(FAIL_REASONS[result.errno] ?? "更新脚本执行失败。", result.log);
+            notify(t("update.failed"));
+            card.setFailed(msg(FAIL_REASONS[result.errno] ?? "update.scriptFailed"), result.log);
         }
         catch (error) {
             card.setFailed(messageOf(error), "");

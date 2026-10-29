@@ -50,33 +50,33 @@
 
         <section class="card">
             <div class="card-head">
-                <h2>状态</h2>
-                <button class="btn ghost small" type="button" id="refresh-status">刷新</button>
+                <h2 data-i18n="status.title">状态</h2>
+                <button class="btn ghost small" type="button" id="refresh-status" data-i18n="action.refresh">刷新</button>
             </div>
 
             <sd-status-card>
                 <div class="status-head">
                     <sd-badge id="state-badge">读取中…</sd-badge>
-                    <sd-badge id="reboot-badge" tone="new" hidden>需重启</sd-badge>
+                    <sd-badge id="reboot-badge" tone="new" hidden data-i18n="state.reboot">需重启</sd-badge>
                 </div>
                 <sd-row data-field="android">
                     <span class="row-k">Android</span>
                     <span class="row-v">-</span>
                 </sd-row>
                 <sd-row data-field="kernel">
-                    <span class="row-k">内核版本</span>
+                    <span class="row-k" data-i18n="field.kernel">内核版本</span>
                     <span class="row-v">-</span>
                 </sd-row>
                 <sd-row data-field="running">
-                    <span class="row-k">运行版本</span>
+                    <span class="row-k" data-i18n="field.running">运行版本</span>
                     <span class="row-v">-</span>
                 </sd-row>
                 <sd-row data-field="local">
-                    <span class="row-k">本地版本</span>
+                    <span class="row-k" data-i18n="field.local">本地版本</span>
                     <span class="row-v">-</span>
                 </sd-row>
                 <sd-row data-field="koSize">
-                    <span class="row-k">驱动大小</span>
+                    <span class="row-k" data-i18n="field.koSize">驱动大小</span>
                     <span class="row-v">-</span>
                 </sd-row>
             </sd-status-card>
@@ -84,14 +84,14 @@
 
         <section class="card">
             <div class="card-head">
-                <h2>开机加载</h2>
+                <h2 data-i18n="autoload.title">开机加载</h2>
             </div>
 
             <sd-autoload-card>
                 <label class="switch-row">
                     <span class="switch-text">
-                        <span class="switch-k">开机优先加载驱动</span>
-                        <span class="switch-hint">默认用模块自带的 post-fs-data.sh；开启后改用 /data/adb/post-fs-data.d/ 优先加载</span>
+                        <span class="switch-k" data-i18n="autoload.key">开机优先加载驱动</span>
+                        <span class="switch-hint" data-i18n="autoload.hint">默认用模块自带的 post-fs-data.sh；开启后改用 /data/adb/post-fs-data.d/ 优先加载</span>
                     </span>
                     <input class="switch" id="autoload-toggle" type="checkbox" role="switch">
                 </label>
@@ -101,8 +101,8 @@
 
         <section class="card">
             <div class="card-head">
-                <h2>检测更新</h2>
-                <button class="icon-btn" type="button" id="upstream-open" title="更新源设置" aria-label="更新源设置">
+                <h2 data-i18n="update.title">检测更新</h2>
+                <button class="icon-btn" type="button" id="upstream-open" data-i18n-title="update.settings" data-i18n-aria-label="update.settings" title="更新源设置" aria-label="更新源设置">
                     <svg class="icon" aria-hidden="true"><use href="#icon-setting"></use></svg>
                 </button>
             </div>
@@ -110,7 +110,7 @@
             <sd-update-card>
                 <div data-view="idle">
                     <div class="update-actions">
-                        <button class="btn" type="button" data-action="check">检测更新</button>
+                        <button class="btn" type="button" data-action="check" data-i18n="update.check">检测更新</button>
                     </div>
                 </div>
 
@@ -127,31 +127,31 @@
 
                 <div data-view="available" hidden>
                     <div class="update-head">
-                        <sd-badge tone="new">发现新版本</sd-badge>
+                        <sd-badge tone="new" data-i18n="update.available">发现新版本</sd-badge>
                         <span class="tag" data-role="available-tag"></span>
                     </div>
                     <div class="update-actions">
-                        <button class="btn primary" type="button" data-action="update">更新</button>
+                        <button class="btn primary" type="button" data-action="update" data-i18n="update.apply">更新</button>
                     </div>
                 </div>
 
                 <div data-view="current" hidden>
                     <div class="update-head">
-                        <sd-badge tone="ok">已是最新版本</sd-badge>
+                        <sd-badge tone="ok" data-i18n="update.upToDate">已是最新版本</sd-badge>
                         <span class="tag" data-role="current-tag"></span>
                     </div>
                     <div class="update-actions">
-                        <button class="btn ghost" type="button" data-action="check">再查一次</button>
+                        <button class="btn ghost" type="button" data-action="check" data-i18n="update.again">再查一次</button>
                     </div>
                 </div>
 
                 <div data-view="failed" hidden>
                     <div class="update-head">
-                        <sd-badge tone="fail">更新失败</sd-badge>
+                        <sd-badge tone="fail" data-i18n="update.failed">更新失败</sd-badge>
                     </div>
                     <p class="empty" data-role="reason"></p>
                     <div class="update-actions">
-                        <button class="btn primary" type="button" data-action="update">重试</button>
+                        <button class="btn primary" type="button" data-action="update" data-i18n="update.retry">重试</button>
                     </div>
                     <pre class="log" data-role="log"></pre>
                 </div>
@@ -159,7 +159,7 @@
                 <div data-view="note" hidden>
                     <p class="empty" data-role="note"></p>
                     <div class="update-actions">
-                        <button class="btn ghost" type="button" data-action="check">重新检测</button>
+                        <button class="btn ghost" type="button" data-action="check" data-i18n="update.recheck">重新检测</button>
                     </div>
                 </div>
             </sd-update-card>
@@ -167,13 +167,13 @@
 
         <section class="card">
             <div class="card-head">
-                <h2>日志</h2>
+                <h2 data-i18n="log.title">日志</h2>
             </div>
 
             <sd-log-panel>
                 <div class="toolbar">
                     <label class="level">
-                        <span>等级</span>
+                        <span data-i18n="log.level">等级</span>
                         <select class="select" id="log-level">
                             <option value="DEBUG">DEBUG</option>
                             <option value="INFO" selected>INFO</option>
@@ -184,8 +184,8 @@
                     <div class="tools">
                         <button class="btn ghost small" type="button" id="log-auto">自动刷新：开</button>
                         <button class="btn ghost small" type="button" id="log-order">排序：正序</button>
-                        <button class="btn ghost small" type="button" id="log-refresh">刷新</button>
-                        <button class="btn ghost small" type="button" id="log-clear">清空</button>
+                        <button class="btn ghost small" type="button" id="log-refresh" data-i18n="action.refresh">刷新</button>
+                        <button class="btn ghost small" type="button" id="log-clear" data-i18n="log.clear">清空</button>
                     </div>
                 </div>
                 <pre class="log" id="log-output"></pre>
@@ -196,20 +196,20 @@
         <sd-upstream-dialog>
             <dialog class="modal" id="upstream-dialog">
                 <div class="modal-head">
-                    <h2>更新源</h2>
-                    <button class="icon-btn modal-close" type="button" id="upstream-close" title="关闭" aria-label="关闭">✕</button>
+                    <h2 data-i18n="upstream.title">更新源</h2>
+                    <button class="icon-btn modal-close" type="button" id="upstream-close" data-i18n-title="upstream.close" data-i18n-aria-label="upstream.close" title="关闭" aria-label="关闭">✕</button>
                 </div>
 
-                <p class="modal-hint">检测更新与下载驱动时使用这个地址。</p>
+                <p class="modal-hint" data-i18n="upstream.hint">检测更新与下载驱动时使用这个地址。</p>
 
                 <div class="preset-row">
-                    <button class="btn ghost small" type="button" data-preset="official">官方</button>
-                    <button class="btn ghost small" type="button" data-preset="mirror">国内加速</button>
+                    <button class="btn ghost small" type="button" data-preset="official" data-i18n="upstream.official">官方</button>
+                    <button class="btn ghost small" type="button" data-preset="mirror" data-i18n="upstream.mirror">国内加速</button>
                 </div>
 
                 <div class="input-row">
                     <input class="input" id="upstream-input" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://api.github.com/…">
-                    <button class="icon-btn" type="button" id="upstream-clear" title="清空" aria-label="清空">
+                    <button class="icon-btn" type="button" id="upstream-clear" data-i18n-title="upstream.clear" data-i18n-aria-label="upstream.clear" title="清空" aria-label="清空">
                         <svg class="icon" aria-hidden="true"><use href="#icon-backspace"></use></svg>
                     </button>
                 </div>
@@ -218,11 +218,23 @@
                 <p class="modal-error" id="upstream-error" hidden></p>
 
                 <div class="modal-actions">
-                    <button class="btn ghost" type="button" id="upstream-cancel">取消</button>
-                    <button class="btn primary" type="button" id="upstream-save">保存</button>
+                    <button class="btn ghost" type="button" id="upstream-cancel" data-i18n="upstream.cancel">取消</button>
+                    <button class="btn primary" type="button" id="upstream-save" data-i18n="upstream.save">保存</button>
                 </div>
             </dialog>
         </sd-upstream-dialog>
+
+        <footer class="page-foot">
+            <label class="lang-row">
+                <span data-i18n="language.title">语言</span>
+                <select class="select" id="language" data-i18n-aria-label="language.title">
+                    <option value="system" data-i18n="language.system">跟随系统</option>
+                    <option value="en">English</option>
+                    <option value="ru">Русский</option>
+                    <option value="zh">简体中文</option>
+                </select>
+            </label>
+        </footer>
     </sd-app>
 
     <script type="module" src="/src/main.ts"></script>

@@ -1,8 +1,9 @@
 /*
- * 和模块里的 shell 脚本打交道。界面相关的东西一概不放在这里。
- * 接口细节见 docs/backend-api.md。
+ * 和模块里的 shell 脚本打交道。界面布局相关的东西不放在这里，
+ * 但抛给界面展示的错误文案走 i18n。接口细节见 docs/backend-api.md。
  */
 import { exec, moduleInfo } from "kernelsu";
+import { t } from "./i18n";
 import { first, parseKV } from "./protocol";
 import { loadUpstream } from "./upstream";
 
@@ -91,7 +92,7 @@ function upstreamEnv(): string {
 
 function run(args: string): Promise<ExecOutput> {
     if (!("ksu" in globalThis)) {
-        return Promise.reject(new Error("未在 KernelSU 环境中运行"));
+        return Promise.reject(new Error(t("app.notInKsu")));
     }
 
     return exec(`${upstreamEnv()}sh '${moduleDir()}/entry.sh' ${args}`);
@@ -100,7 +101,7 @@ function run(args: string): Promise<ExecOutput> {
 async function runOk(args: string): Promise<string> {
     const { errno, stderr, stdout } = await run(args);
     if (errno !== 0) {
-        throw new Error(cleanError(stderr || stdout) || `命令失败 (errno ${errno})`);
+        throw new Error(cleanError(stderr || stdout) || t("app.commandFailed", { errno }));
     }
 
     return stdout;
@@ -133,14 +134,14 @@ export async function readStatus(): Promise<ModuleStatus> {
     const map = parseKV(await runOk("status quick"));
 
     return {
-        android: first(map, "android_version", "未知"),
+        android: first(map, "android_version", t("common.unknown")),
         gkiBranch: first(map, "gki_branch", ""),
-        kernel: first(map, "kernel_version", "未知"),
+        kernel: first(map, "kernel_version", t("common.unknown")),
         koSize: toNumber(first(map, "ko_size", "0")),
         loaded: first(map, "loaded") === "true",
-        local: first(map, "local_version", "未知"),
+        local: first(map, "local_version", t("common.unknown")),
         rebootRequired: first(map, "reboot_required") === "true",
-        running: first(map, "running_version", "未知"),
+        running: first(map, "running_version", t("common.unknown")),
     };
 }
 
@@ -156,12 +157,12 @@ async function fetchRelease(): Promise<Release> {
         data = JSON.parse(raw);
     }
     catch {
-        throw new Error("上游响应不是合法 JSON");
+        throw new Error(t("api.badJson"));
     }
 
     const body = data as { assets?: unknown; tag_name?: unknown };
     if (typeof body.tag_name !== "string" || !Array.isArray(body.assets)) {
-        throw new TypeError("上游响应缺少 tag_name 或 assets");
+        throw new TypeError(t("api.missingFields"));
     }
 
     const assets: ReleaseAsset[] = [];
@@ -213,13 +214,13 @@ export async function checkUpdate(): Promise<UpdateCheck> {
         const branch = status.gkiBranch === "" ? status.android : status.gkiBranch;
         return {
             state: "error",
-            message: `没有匹配本机的驱动：android ${branch} / 内核 ${status.kernel}`,
+            message: t("api.noAsset", { branch, kernel: status.kernel }),
         };
     }
 
     const sha256 = sha256Of(asset);
     if (sha256 === "") {
-        return { state: "error", message: "上游没有提供 sha256" };
+        return { state: "error", message: t("api.noSha") };
     }
 
     return {

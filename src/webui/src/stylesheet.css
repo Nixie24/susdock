@@ -391,6 +391,22 @@ sd-row .row-v {
     font-size: 13px;
 }
 
+/* 页脚：语言选择 */
+
+.page-foot {
+    display: flex;
+    justify-content: center;
+    padding: 2px 4px 14px;
+}
+
+.lang-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dim);
+    font-size: 13px;
+}
+
 .select {
     -webkit-appearance: none;
     appearance: none;
