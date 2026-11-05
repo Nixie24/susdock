@@ -1,14 +1,16 @@
+import type { DictKey, Text } from "../i18n";
 import type { UpstreamPreset } from "../upstream";
+import { LANG_EVENT, msg, t, tOf } from "../i18n";
 import { notify } from "../notify";
 import { customSetting, loadUpstream, OFFICIAL_API, presetSetting, saveUpstream } from "../upstream";
 import { requireElement } from "./dom";
 
 type Preset = Exclude<UpstreamPreset, "custom">;
 
-const NOTE_BY_PRESET: Record<UpstreamPreset, string> = {
-    custom: "驱动下载：直连 GitHub",
-    mirror: "驱动下载：经 ghfast.top 加速",
-    official: "驱动下载：直连 GitHub",
+const NOTE_KEY: Record<UpstreamPreset, DictKey> = {
+    custom: "upstream.note.custom",
+    mirror: "upstream.note.mirror",
+    official: "upstream.note.official",
 };
 
 const HTTPS_URL = /^https:\/\/\S+$/;
@@ -21,12 +23,15 @@ const HTTPS_URL = /^https:\/\/\S+$/;
 export class SdUpstreamDialog extends HTMLElement {
     private ready = false;
     private preset: UpstreamPreset = "official";
+    private lastError: Text = "";
 
     connectedCallback(): void {
         if (this.ready) {
             return;
         }
         this.ready = true;
+
+        document.addEventListener(LANG_EVENT, () => this.sync());
 
         const dialog = this.dialog();
 
@@ -85,7 +90,7 @@ export class SdUpstreamDialog extends HTMLElement {
         const value = this.input().value.trim();
 
         if (!HTTPS_URL.test(value)) {
-            this.setError("请输入以 https:// 开头的地址");
+            this.setError(msg("upstream.invalid"));
             this.input().focus();
             return;
         }
@@ -93,7 +98,7 @@ export class SdUpstreamDialog extends HTMLElement {
         saveUpstream(this.preset === "custom" ? customSetting(value) : presetSetting(this.preset));
 
         this.dialog().close();
-        notify("更新源已保存");
+        notify(t("upstream.saved"));
         this.dispatchEvent(new CustomEvent("sd-upstream-changed", { bubbles: true, composed: true }));
     }
 
@@ -103,12 +108,18 @@ export class SdUpstreamDialog extends HTMLElement {
             button.classList.toggle("active", button.dataset.preset === this.preset);
         }
 
-        requireElement(this, "#upstream-note").textContent = NOTE_BY_PRESET[this.preset];
+        requireElement(this, "#upstream-note").textContent = t(NOTE_KEY[this.preset]);
+
+        const error = requireElement(this, "#upstream-error");
+        error.textContent = tOf(this.lastError);
+        error.hidden = this.lastError === "";
     }
 
-    private setError(text: string): void {
+    private setError(text: Text): void {
+        this.lastError = text;
+
         const node = requireElement(this, "#upstream-error");
-        node.textContent = text;
+        node.textContent = tOf(text);
         node.hidden = text === "";
     }
 

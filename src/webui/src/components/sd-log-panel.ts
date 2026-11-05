@@ -1,6 +1,8 @@
 import type { LogLevel } from "../api";
+import type { Text } from "../i18n";
 import { clearLog, readLog, readLogLevel, setLogLevel } from "../api";
 import { messageOf } from "../errors";
+import { intlLocale, LANG_EVENT, msg, t, tOf } from "../i18n";
 import { notify } from "../notify";
 import { requireElement } from "./dom";
 
@@ -8,7 +10,7 @@ const AUTO_MS = 5000;
 const LOG_LINES = 300;
 
 function clock(): string {
-    return new Date().toLocaleTimeString("zh-CN", { hour12: false });
+    return new Date().toLocaleTimeString(intlLocale(), { hour12: false });
 }
 
 // 倒序：最新的一行在最上面
@@ -26,19 +28,25 @@ function reverseLines(text: string): string {
 /*
  * 日志面板：预览、清空、调节等级。
  * 等级改动要等下一次命令执行才生效，所以这里只提示，不刷新当前日志。
+ * 按钮文字和统计行随语言切换重渲染；日志正文只在下次刷新时换文案。
  */
 export class SdLogPanel extends HTMLElement {
-    private timer: number | null = null;
     private auto = true;
-    private reverse = false;
+    private lastLogText = "";
+    private lastMeta: Text = msg("state.reading");
     private loading = false;
+    private readError = "";
     private ready = false;
+    private reverse = false;
+    private timer: number | null = null;
 
     connectedCallback(): void {
         if (this.ready) {
             return;
         }
         this.ready = true;
+
+        document.addEventListener(LANG_EVENT, () => this.renderTexts());
 
         requireElement(this, "#log-refresh").addEventListener("click", () => void this.refresh());
         requireElement(this, "#log-clear").addEventListener("click", () => void this.clear());
@@ -47,6 +55,7 @@ export class SdLogPanel extends HTMLElement {
         requireElement<HTMLSelectElement>(this, "#log-level")
             .addEventListener("change", () => void this.changeLevel());
 
+        this.renderTexts();
         void this.loadLevel();
         void this.refresh();
         this.startAuto();
@@ -63,39 +72,35 @@ export class SdLogPanel extends HTMLElement {
         this.loading = true;
 
         const log = requireElement<HTMLElement>(this, "#log-output");
-        const meta = requireElement(this, "#log-meta");
+
+        // 正序时新日志在底部，倒序时在顶部；只有原本就贴在那一端才跟着滚
+        const pinned = this.reverse
+            ? log.scrollTop <= 8
+            : log.scrollTop + log.clientHeight >= log.scrollHeight - 8;
 
         try {
             const text = await readLog(LOG_LINES);
             const trimmed = text.trim();
 
-            // 正序时新日志在底部，倒序时在顶部；只有原本就贴在那一端才跟着滚
-            const pinned = this.reverse
-                ? log.scrollTop <= 8
-                : log.scrollTop + log.clientHeight >= log.scrollHeight - 8;
-
-            let display = text;
-            if (trimmed === "") {
-                display = "（日志为空）";
-            }
-            else if (this.reverse) {
-                display = reverseLines(text);
-            }
-            log.textContent = display;
-
-            if (jumpToEnd || pinned) {
-                log.scrollTop = this.reverse ? 0 : log.scrollHeight;
-            }
+            this.readError = "";
+            this.lastLogText = text;
 
             const count = trimmed === "" ? 0 : trimmed.split("\n").length;
-            meta.textContent = `最后更新 ${clock()} · ${count} 行`;
+            this.lastMeta = msg("log.metaLast", { count, time: clock() });
         }
         catch (error) {
-            log.textContent = `读取日志失败：${messageOf(error)}`;
-            meta.textContent = `最后更新 ${clock()}`;
+            this.readError = messageOf(error);
+            this.lastLogText = "";
+            this.lastMeta = msg("log.metaTime", { time: clock() });
         }
         finally {
             this.loading = false;
+        }
+
+        this.renderLog();
+
+        if (jumpToEnd || pinned) {
+            log.scrollTop = this.reverse ? 0 : log.scrollHeight;
         }
     }
 
@@ -103,10 +108,10 @@ export class SdLogPanel extends HTMLElement {
         try {
             await clearLog();
             await this.refresh();
-            notify("日志已清空");
+            notify(t("log.cleared"));
         }
         catch (error) {
-            notify(`清空日志失败：${messageOf(error)}`);
+            notify(t("log.clearFailed", { message: messageOf(error) }));
         }
     }
 
@@ -127,23 +132,23 @@ export class SdLogPanel extends HTMLElement {
         try {
             const applied = await setLogLevel(level);
             select.value = applied;
-            notify(`日志等级已设为 ${applied}，下次执行生效`);
+            notify(t("log.levelSet", { level: applied }));
         }
         catch (error) {
-            notify(`设置日志等级失败：${messageOf(error)}`);
+            notify(t("log.levelFailed", { message: messageOf(error) }));
             await this.loadLevel();
         }
     }
 
     private toggleOrder(): void {
         this.reverse = !this.reverse;
-        requireElement(this, "#log-order").textContent = `排序：${this.reverse ? "倒序" : "正序"}`;
+        this.renderTexts();
         void this.refresh(true);
     }
 
     private toggleAuto(): void {
         this.auto = !this.auto;
-        requireElement(this, "#log-auto").textContent = `自动刷新：${this.auto ? "开" : "关"}`;
+        this.renderTexts();
 
         if (this.auto) {
             this.startAuto();
@@ -151,6 +156,28 @@ export class SdLogPanel extends HTMLElement {
         else {
             this.stopAuto();
         }
+    }
+
+    // 按当前排序状态渲染日志正文和统计行
+    private renderLog(): void {
+        const log = requireElement<HTMLElement>(this, "#log-output");
+
+        if (this.readError !== "") {
+            log.textContent = t("log.readFailed", { message: this.readError });
+        }
+        else if (this.lastLogText.trim() === "") {
+            log.textContent = t("log.empty");
+        }
+        else {
+            log.textContent = this.reverse ? reverseLines(this.lastLogText) : this.lastLogText;
+        }
+    }
+
+    private renderTexts(): void {
+        requireElement(this, "#log-auto").textContent = t(this.auto ? "log.autoOn" : "log.autoOff");
+        requireElement(this, "#log-order").textContent = t(this.reverse ? "log.orderDesc" : "log.orderAsc");
+        this.renderLog();
+        requireElement(this, "#log-meta").textContent = tOf(this.lastMeta);
     }
 
     private startAuto(): void {
