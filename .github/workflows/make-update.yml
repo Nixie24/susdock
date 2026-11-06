@@ -25,7 +25,11 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - name: install
+        env:
+          # shellcheck 的 npm 包在 postinstall 下载二进制，带 token 才不会被匿名限流
+          GITHUB_TOKEN: ${{ github.token }}
+        run: pnpm install --frozen-lockfile
 
       - name: Determine tag
         id: tag
