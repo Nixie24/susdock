@@ -2,7 +2,7 @@ import type { LogLevel } from "../api";
 import type { Text } from "../i18n";
 import { clearLog, readLog, readLogLevel, setLogLevel } from "../api";
 import { messageOf } from "../errors";
-import { intlLocale, LANG_EVENT, msg, t, tOf } from "../i18n";
+import { intlLocale, msg, onLanguageChange, t, tOf } from "../i18n";
 import { notify } from "../notify";
 import { requireElement } from "./dom";
 
@@ -46,7 +46,7 @@ export class SdLogPanel extends HTMLElement {
         }
         this.ready = true;
 
-        document.addEventListener(LANG_EVENT, () => this.renderTexts());
+        onLanguageChange(this, () => this.renderTexts());
 
         requireElement(this, "#log-refresh").addEventListener("click", () => void this.refresh());
         requireElement(this, "#log-clear").addEventListener("click", () => void this.clear());
