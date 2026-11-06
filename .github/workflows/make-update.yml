@@ -35,8 +35,10 @@ jobs:
             git fetch --tags --force
             tag="$(git tag --points-at HEAD | grep '^v' | head -n 1 || true)"
             if [ -z "$tag" ]; then
-              echo "::error::No release tag found on the workflow_run HEAD commit (${GITHUB_SHA})"
-              exit 1
+              # Release 的 check job 判定不需要发布时不会打 tag，这里正常跳过
+              echo "::notice::No release tag on ${GITHUB_SHA}, nothing to publish"
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
             fi
             echo "tag=$tag" >> "$GITHUB_OUTPUT"
           else
@@ -44,6 +46,7 @@ jobs:
           fi
 
       - name: make update files
+        if: steps.tag.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
@@ -56,6 +59,7 @@ jobs:
           node scripts/make-update.ts
 
       - name: publish update branch
+        if: steps.tag.outputs.skip != 'true'
         uses: crazy-max/ghaction-github-pages@v4
         with:
           target_branch: update

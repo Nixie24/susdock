@@ -1,0 +1,72 @@
+name: CI
+
+# 只检查功能分支：main 交给 check-update，update 由 make-update 自动生成
+on:
+  pull_request:
+  push:
+    branches-ignore: [main, update]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # 与 .githooks/pre-commit 一致：eslint（含 shfmt/shellcheck），
+  # 外加 release 也会跑的 typecheck 和测试
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: install
+        run: pnpm install --frozen-lockfile
+
+      - name: lint
+        run: pnpm lint
+
+      - name: typecheck
+        run: pnpm --filter webui exec tsc --noEmit
+
+      - name: test
+        run: pnpm test
+
+  # 与 .githooks/commit-msg 一致：检查提交信息格式
+  commit-messages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: install
+        run: pnpm install --frozen-lockfile
+
+      - name: lint pull request commits
+        if: github.event_name == 'pull_request'
+        env:
+          FROM: ${{ github.event.pull_request.base.sha }}
+          TO: ${{ github.event.pull_request.head.sha }}
+        run: pnpm exec commitfmt --from "$FROM" --to "$TO"
+
+      # 首次推送没有 before，跳过
+      - name: lint pushed commits
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        env:
+          FROM: ${{ github.event.before }}
+          TO: ${{ github.event.after }}
+        run: pnpm exec commitfmt --from "$FROM" --to "$TO"

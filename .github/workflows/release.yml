@@ -1,8 +1,7 @@
 name: Release
 
+# 由 check-update.yml 判定需要发布后触发，也可手动运行
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
