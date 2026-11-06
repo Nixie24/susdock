@@ -1,7 +1,7 @@
 import type { ModuleStatus } from "../api";
 import type { SdBadge } from "./sd-badge";
 import type { SdRow } from "./sd-row";
-import { LANG_EVENT, t } from "../i18n";
+import { onLanguageChange, t } from "../i18n";
 import { requireElement } from "./dom";
 import "./sd-badge";
 import "./sd-row";
@@ -33,9 +33,15 @@ function formatSize(bytes: number): string {
 export class SdStatusCard extends HTMLElement {
     private status: ModuleStatus | null = null;
     private error: string | null = null;
+    private ready = false;
 
     connectedCallback(): void {
-        document.addEventListener(LANG_EVENT, () => this.rerender());
+        if (this.ready) {
+            return;
+        }
+        this.ready = true;
+
+        onLanguageChange(this, () => this.rerender());
     }
 
     setStatus(status: ModuleStatus): void {
@@ -75,10 +81,11 @@ export class SdStatusCard extends HTMLElement {
 
         requireElement(this, "#reboot-badge").hidden = !status.rebootRequired;
 
-        this.setField("android", status.android);
-        this.setField("kernel", status.kernel);
-        this.setField("running", status.running);
-        this.setField("local", status.local);
+        // 空值在这里补翻译，换语言时能跟着变
+        this.setField("android", status.android || t("common.unknown"));
+        this.setField("kernel", status.kernel || t("common.unknown"));
+        this.setField("running", status.running || t("common.unknown"));
+        this.setField("local", status.local || t("common.unknown"));
         this.setField("koSize", formatSize(status.koSize));
     }
 

@@ -1,7 +1,7 @@
 import type { Text } from "../i18n";
 import { readAutoload, setAutoload } from "../api";
 import { messageOf } from "../errors";
-import { LANG_EVENT, msg, t, tOf } from "../i18n";
+import { msg, onLanguageChange, t, tOf } from "../i18n";
 import { notify } from "../notify";
 import { requireElement } from "./dom";
 
@@ -21,7 +21,7 @@ export class SdAutoloadCard extends HTMLElement {
         }
         this.ready = true;
 
-        document.addEventListener(LANG_EVENT, () => this.renderMeta());
+        onLanguageChange(this, () => this.renderMeta());
 
         requireElement<HTMLInputElement>(this, "#autoload-toggle")
             .addEventListener("change", () => void this.toggle());

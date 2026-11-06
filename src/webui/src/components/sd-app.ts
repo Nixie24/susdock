@@ -5,7 +5,7 @@ import type { SdUpdateCard } from "./sd-update-card";
 import type { SdUpstreamDialog } from "./sd-upstream-dialog";
 import { applyUpdate, checkUpdate, moduleVersion, readStatus } from "../api";
 import { messageOf } from "../errors";
-import { currentLanguage, LANG_EVENT, msg, setLanguage, t } from "../i18n";
+import { currentLanguage, languageLabel, LOCALES, msg, onLanguageChange, setLanguage, t } from "../i18n";
 import { notify } from "../notify";
 import { currentTheme, initTheme, toggleTheme } from "../theme";
 import { requireElement } from "./dom";
@@ -23,6 +23,13 @@ const FAIL_REASONS: Partial<Record<number, DictKey>> = {
     3: "update.fail.3",
     4: "update.fail.4",
 };
+
+function option(value: Language, text: string): HTMLOptionElement {
+    const node = document.createElement("option");
+    node.value = value;
+    node.textContent = text;
+    return node;
+}
 
 /*
  * 页面根组件：负责编排状态刷新和更新流程。
@@ -53,8 +60,9 @@ export class SdApp extends HTMLElement {
         this.syncTheme(themeButton);
 
         this.initLanguageBar();
-        document.addEventListener(LANG_EVENT, () => {
+        onLanguageChange(this, () => {
             this.syncTheme(themeButton);
+            this.renderLanguageOptions();
         });
 
         requireElement<HTMLButtonElement>(this, "#refresh-status")
@@ -73,13 +81,26 @@ export class SdApp extends HTMLElement {
         this.autoCheck();
     }
 
-    // 底部语言选择：跟随系统 / English / Русский / 简体中文
+    // 底部语言选择：跟随系统 + 各语言自称
     private initLanguageBar(): void {
         const select = requireElement<HTMLSelectElement>(this, "#language");
-        select.value = currentLanguage();
         select.addEventListener("change", () => {
             setLanguage(select.value as Language);
         });
+        this.renderLanguageOptions();
+    }
+
+    // 选项由 JS 生成：语言清单只在 LOCALES 维护，index.html 里不再重复
+    private renderLanguageOptions(): void {
+        const select = requireElement<HTMLSelectElement>(this, "#language");
+        const options = [option("system", t("language.system"))];
+
+        for (const locale of LOCALES) {
+            options.push(option(locale, languageLabel(locale)));
+        }
+
+        select.replaceChildren(...options);
+        select.value = currentLanguage();
     }
 
     // 打开页面时自动查一次。10 分钟内重复打开不重复请求，
