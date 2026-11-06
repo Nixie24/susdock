@@ -1,5 +1,5 @@
 import type { Text } from "../i18n";
-import { LANG_EVENT, tOf } from "../i18n";
+import { onLanguageChange, tOf } from "../i18n";
 import { requireElement } from "./dom";
 import "./sd-badge";
 
@@ -24,7 +24,7 @@ export class SdUpdateCard extends HTMLElement {
         }
         this.ready = true;
 
-        document.addEventListener(LANG_EVENT, () => this.rerender());
+        onLanguageChange(this, () => this.rerender());
 
         // 事件委托：所有按钮都带 data-action，隐藏视图里的按钮也能正常响应
         this.addEventListener("click", event => {

@@ -1,6 +1,6 @@
 import type { DictKey, Text } from "../i18n";
 import type { UpstreamPreset } from "../upstream";
-import { LANG_EVENT, msg, t, tOf } from "../i18n";
+import { msg, onLanguageChange, t, tOf } from "../i18n";
 import { notify } from "../notify";
 import { customSetting, loadUpstream, OFFICIAL_API, presetSetting, saveUpstream } from "../upstream";
 import { requireElement } from "./dom";
@@ -31,7 +31,7 @@ export class SdUpstreamDialog extends HTMLElement {
         }
         this.ready = true;
 
-        document.addEventListener(LANG_EVENT, () => this.sync());
+        onLanguageChange(this, () => this.sync());
 
         const dialog = this.dialog();
 

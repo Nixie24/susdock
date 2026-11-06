@@ -1,8 +1,7 @@
 name: Release
 
+# 由 check-update.yml 判定需要发布后触发，也可手动运行
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -25,6 +24,9 @@ jobs:
           cache: pnpm
 
       - name: install
+        env:
+          # shellcheck 的 npm 包在 postinstall 下载二进制，带 token 才不会被匿名限流
+          GITHUB_TOKEN: ${{ github.token }}
         run: pnpm install --frozen-lockfile
 
       - name: lint

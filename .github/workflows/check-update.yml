@@ -1,0 +1,65 @@
+name: Check Update
+
+# main 有推送时先比 versionCode，确实需要发布才触发 Release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: check-update-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  # gh workflow run 需要写权限，GITHUB_TOKEN 的 workflow_dispatch 是例外，可以触发新运行
+  actions: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: version
+        id: version
+        run: |
+          read -r version code < <(node scripts/version.ts)
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+          echo "versionCode=$code" >>"$GITHUB_OUTPUT"
+
+      - name: compare with published releases
+        id: compare
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          current="${{ steps.version.outputs.versionCode }}"
+
+          # 取所有 release tag 里的最大 versionCode，没有 release 时按 0 算
+          latest="$(
+            gh release list --limit 100 --json tagName --jq '.[].tagName' \
+              | sed -n 's/.*-\([0-9]\+\)$/\1/p' \
+              | sort -n \
+              | tail -n 1
+          )"
+          latest="${latest:-0}"
+
+          if [ "$current" -gt "$latest" ]; then
+            echo "needed=true" >>"$GITHUB_OUTPUT"
+            echo "::notice::versionCode $current > published $latest, triggering release"
+          else
+            echo "needed=false" >>"$GITHUB_OUTPUT"
+            echo "::notice::versionCode $current <= published $latest, skipping"
+          fi
+
+      - name: trigger release
+        if: steps.compare.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run release.yml --ref "${{ github.ref_name }}"

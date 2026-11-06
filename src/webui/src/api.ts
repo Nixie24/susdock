@@ -133,15 +133,17 @@ function toNumber(value: string): number {
 export async function readStatus(): Promise<ModuleStatus> {
     const map = parseKV(await runOk("status quick"));
 
+    // 缺字段时留空，由渲染层补 t("common.unknown")：
+    // 翻译不能在这里求值，否则切语言后旧语言的字符串会留在数据里
     return {
-        android: first(map, "android_version", t("common.unknown")),
+        android: first(map, "android_version", ""),
         gkiBranch: first(map, "gki_branch", ""),
-        kernel: first(map, "kernel_version", t("common.unknown")),
+        kernel: first(map, "kernel_version", ""),
         koSize: toNumber(first(map, "ko_size", "0")),
         loaded: first(map, "loaded") === "true",
-        local: first(map, "local_version", t("common.unknown")),
+        local: first(map, "local_version", ""),
         rebootRequired: first(map, "reboot_required") === "true",
-        running: first(map, "running_version", t("common.unknown")),
+        running: first(map, "running_version", ""),
     };
 }
 
