@@ -201,7 +201,7 @@ test_release_json() {
         release_json
     ")
     assert_contains "$out" '"tag_name":"v1.5.3"' "release_json 应原样输出 JSON"
-    assert_eq "$(ls "$T/data/module"/release.*.json 2> /dev/null | wc -l | tr -d ' ')" "0" "临时文件应删除"
+    assert_eq "$(find "$T/data/module" -type f -name "release.*.json" 2> /dev/null | wc -l | tr -d ' ')" "0" "临时文件应删除"
 
     teardown
 }

@@ -703,7 +703,7 @@ export default antfu({
     /**
      * shfmt 格式化规则
      */
-    files: ["src/module/**/*.sh"],
+    files: ["**/*.sh"],
     languageOptions: {
         parser: parserPlain,
     },
@@ -728,7 +728,7 @@ export default antfu({
     /*
      * shellcheck 语义检查
      */
-    files: ["src/module/**/*.sh"],
+    files: ["**/*.sh"],
     plugins: {
         shellcheck: shellcheckPlugin,
     },
