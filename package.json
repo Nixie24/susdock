@@ -5,7 +5,7 @@
         "updateJson": "https://raw.githubusercontent.com/Nixie24/susdock/refs/heads/update/update.json"
     },
     "type": "module",
-    "version": "0.3.6",
+    "version": "0.4.0",
     "private": true,
     "packageManager": "pnpm@12.14.0",
     "description": "A SuSFS Manager for LKM Setups",
