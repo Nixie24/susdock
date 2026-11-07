@@ -7,8 +7,10 @@ description: README.md
 license: GPL-2.0-only
 homepage: https://github.com/Nixie24/susdock
 support: https://github.com/Nixie24/susdock/issues
-tags: [tools]
+tags: [system, tools]
 metamodule: false
+
+icon: assets/favicon.svg
 
 authors:
   - name: Nix24

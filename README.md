@@ -20,7 +20,7 @@ Thanks also to the [SuSFS](https://github.com/simonpunk/susfs4ksu) and [KernelSU
 
 The WebUI covers status, updates, logs, log level and the update source.
 
-Requires KernelSU, arm64 or x86_64 on Android 12+. Network access is only needed for update checks and downloads.
+Requires KernelSU, arm64 on Android 12+. Network access is only needed for update checks and downloads.
 
 ## How it works
 
