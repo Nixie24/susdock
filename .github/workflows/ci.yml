@@ -1,10 +1,8 @@
 name: CI
 
-# 只检查功能分支：main 交给 check-update，update 由 publish 自动生成
+# 只在 PR 上运行，push 不重复检查；main 交给 check-update，update 由 publish 自动生成
 on:
   pull_request:
-  push:
-    branches-ignore: [main, update]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -63,16 +61,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: lint pull request commits
-        if: github.event_name == 'pull_request'
         env:
           FROM: ${{ github.event.pull_request.base.sha }}
           TO: ${{ github.event.pull_request.head.sha }}
-        run: pnpm exec commitfmt --from "$FROM" --to "$TO"
-
-      # 首次推送没有 before，跳过
-      - name: lint pushed commits
-        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
-        env:
-          FROM: ${{ github.event.before }}
-          TO: ${{ github.event.after }}
         run: pnpm exec commitfmt --from "$FROM" --to "$TO"
