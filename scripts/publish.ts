@@ -5,7 +5,7 @@ import { join } from "node:path";
 import process from "node:process";
 
 function fail(message: string): never {
-    console.error(`make-update: ${message}`);
+    console.error(`publish: ${message}`);
     process.exit(1);
 }
 
@@ -63,5 +63,5 @@ mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, "update.json"), `${JSON.stringify(update, null, 2)}\n`);
 writeFileSync(join(outDir, "changelog.md"), `${(release.body ?? "").trim()}\n`);
 
-console.log(`make-update: 已写入 ${outDir}/update.json 与 ${outDir}/changelog.md`);
+console.log(`publish: 已写入 ${outDir}/update.json 与 ${outDir}/changelog.md`);
 console.log(JSON.stringify(update, null, 2));
