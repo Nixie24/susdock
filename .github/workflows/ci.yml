@@ -1,6 +1,6 @@
 name: CI
 
-# 只检查功能分支：main 交给 check-update，update 由 make-update 自动生成
+# 只检查功能分支：main 交给 check-update，update 由 publish 自动生成
 on:
   pull_request:
   push:

@@ -1,0 +1,60 @@
+name: Publish
+
+# 由 release.yml 在 Release 成功后触发，也可手动运行。
+# 版本从 package.json 读取，不依赖调用方传参。
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: publish-update
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: read version
+        id: version
+        run: |
+          read -r version code < <(node scripts/version.ts)
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+          echo "versionCode=$code" >>"$GITHUB_OUTPUT"
+          echo "tag=v${version}-${code}" >>"$GITHUB_OUTPUT"
+
+      - name: check release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Release $TAG does not exist"
+            exit 1
+          fi
+
+      - name: make update files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+          VERSION_CODE: ${{ steps.version.outputs.versionCode }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          OUT_DIR: update-out
+        run: node scripts/publish.ts
+
+      - name: publish update branch
+        uses: crazy-max/ghaction-github-pages@v4
+        with:
+          target_branch: update
+          build_dir: update-out
+          jekyll: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
