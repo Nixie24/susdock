@@ -1,10 +1,12 @@
-# SusDock 模块接口文档
+**English** | [简体中文](backend-api.zh.md)
 
-写给 WebUI 前端。后端代码在 `src/module/`，这里记录的是脚本当前的输出和行为。
+# SusDock Module API
 
-## 1. 运行环境
+For the WebUI frontend. The backend lives in `src/module/`; this document records what the scripts currently output and how they behave.
 
-KernelSU 用 WebView 打开模块 `webroot/` 下的页面。前端通过 `kernelsu` 包的 `exec()` 调脚本：
+## 1. Runtime environment
+
+KernelSU opens pages under the module's `webroot/` in a WebView. The frontend calls the scripts through `exec()` from the `kernelsu` package:
 
 ```ts
 import { exec, moduleInfo } from "kernelsu";
@@ -15,120 +17,117 @@ const result = await exec(`sh '/data/adb/modules/${id}/entry.sh' status quick`);
 if (result.errno !== 0) {
     throw new Error(result.stderr);
 }
-// 成功时 result.stdout 是 key=value 行，result.stderr 是运行日志
+// On success, result.stdout holds key=value lines and result.stderr holds the run log.
 ```
 
-模块目录按 `module.prop` 的 `id` 定位：
+The module directory is located by the `id` in `module.prop`:
 
 ```
 /data/adb/modules/<id>
 ```
 
-`id` 由 `package.json` 的 `name` 生成，当前是 `susdock`。前端用 `moduleInfo()` 返回的 `id` 拼路径，不要写死。
+`id` comes from `name` in `package.json` and is currently `susdock`. The frontend builds the path from `moduleInfo()`'s `id`; do not hardcode it.
 
-## 2. 调用约定
+## 2. Calling conventions
 
-入口只有一个：
-
-```sh
-sh <moddir>/entry.sh <command> [subcommand] [args...]
-```
+There is a single entry point: `<moddir>/entry.sh`
 
 ### 2.1 stdout / stderr
 
-| 流     | 内容                                                       |
-| ------ | ---------------------------------------------------------- |
-| stdout | 只放机器可读的结果：`key=value` 行、单个值，或原始日志文本 |
-| stderr | 运行日志，格式 `[YYYY-MM-DD HH:MM:SS] [LEVEL] message`     |
+| Stream | Content                                                                           |
+| ------ | --------------------------------------------------------------------------------- |
+| stdout | Machine-readable results only: `key=value` lines, a single value, or raw log text |
+| stderr | Run log, formatted as `[YYYY-MM-DD HH:MM:SS] [LEVEL] message`                     |
 
-`key=value` 行只用小写 key，匹配 `^[a-z_][a-z0-9_]*=.*$`。同一个 key 可能出现多次（多行内容），取第一次的值即可。
+`key=value` lines use lower-case keys only and match `^[a-z_][a-z0-9_]*=.*$`. The same key may appear multiple times (multi-line content); take the first value.
 
-### 2.2 退出码
+### 2.2 Exit codes
 
-| 退出码 | 含义                   |
-| ------ | ---------------------- |
-| `0`    | 成功 / 布尔命令为真    |
-| `1`    | 通用失败；布尔命令为假 |
-| `>1`   | 具体错误码，见第 6 节  |
+| Code | Meaning                              |
+| ---- | ------------------------------------ |
+| `0`  | Success / true for boolean commands  |
+| `1`  | Generic failure / false for booleans |
+| `>1` | Specific error code, see section 6   |
 
-`err()` 会往 stderr 写 `[ERROR] <message>`，然后 `exit 1`。所以退出码为 1 时要再看一眼 stderr：有 `[ERROR]` 是执行失败，没有就是正常的否定结果。
+`err()` writes `[ERROR] <message>` to stderr and then exits 1. So when the exit code is 1, check stderr: an `[ERROR]` line means the call failed; otherwise it is a normal negative result.
 
-### 2.3 前置检查
+### 2.3 Preflight checks
 
-每次调用都会先过这几关：
+Every call goes through these checks first:
 
-| 条件                               | stderr                                 | 退出码 |
-| ---------------------------------- | -------------------------------------- | ------ |
-| `MODDIR` 未设置                    | `[ERROR] MODDIR not set`               | 1      |
-| 模块被禁用（存在 `disable` 文件）  | `[ERROR] module is disabled`           | 1      |
-| 模块标记卸载（存在 `remove` 文件） | `[ERROR] module is marked for removal` | 1      |
-| 命令未知                           | `[ERROR] invalid command: <cmd>`       | 1      |
+| Condition                                      | stderr                                 | Exit code |
+| ---------------------------------------------- | -------------------------------------- | --------- |
+| `MODDIR` is not set                            | `[ERROR] MODDIR not set`               | 1         |
+| Module is disabled (`disable` exists)          | `[ERROR] module is disabled`           | 1         |
+| Module is marked for removal (`remove` exists) | `[ERROR] module is marked for removal` | 1         |
+| Unknown command                                | `[ERROR] invalid command: <cmd>`       | 1         |
 
-## 3. 路径
+## 3. Paths
 
-| 变量                    | 路径                                    | 说明                             |
-| ----------------------- | --------------------------------------- | -------------------------------- |
-| `DATA_DIR`              | `/data/adb/<id>`                        | 模块数据目录                     |
-| `MOD_DIR`               | `/data/adb/<id>/mod`                    | 驱动与版本文件                   |
-| `CONFIG_FILE`           | `/data/adb/<id>/config`                 | 持久化设置，当前只认 `LOG_LEVEL` |
-| `LOG_FILE`              | `/data/adb/<id>/logs/module.log`        | 当前日志                         |
-| 轮转日志                | `/data/adb/<id>/logs/module.log.1`      | 超过 1 MiB 时轮转                |
-| `UPSTREAM_VERSION_FILE` | `/data/adb/<id>/mod/version`            | 已安装的上游版本（即 tag）       |
-| `UPSTREAM_LOCAL_TARGET` | `/data/adb/<id>/mod/susfs_guard_lkm.ko` | 已下载的驱动                     |
-| `REBOOT_FLAG`           | `/data/adb/<id>/mod/reboot`             | 存在表示需要重启                 |
+| Variable                | Path                                    | Description                                  |
+| ----------------------- | --------------------------------------- | -------------------------------------------- |
+| `DATA_DIR`              | `/data/adb/<id>`                        | Module data directory                        |
+| `MOD_DIR`               | `/data/adb/<id>/mod`                    | Driver and version files                     |
+| `CONFIG_FILE`           | `/data/adb/<id>/config`                 | Persisted settings; only `LOG_LEVEL` for now |
+| `LOG_FILE`              | `/data/adb/<id>/logs/module.log`        | Current log                                  |
+| Rotated log             | `/data/adb/<id>/logs/module.log.1`      | Rotated when it exceeds 1 MiB                |
+| `UPSTREAM_VERSION_FILE` | `/data/adb/<id>/mod/version`            | Installed upstream version (the tag)         |
+| `UPSTREAM_LOCAL_TARGET` | `/data/adb/<id>/mod/susfs_guard_lkm.ko` | Downloaded driver                            |
+| `REBOOT_FLAG`           | `/data/adb/<id>/mod/reboot`             | Present means a reboot is required           |
 
-## 4. 命令一览
+## 4. Command overview
 
-| 命令                     | 作用                  | 网络   |
-| ------------------------ | --------------------- | ------ |
-| `status installed`       | 驱动是否已加载        | 否     |
-| `status susfs_version`   | 运行中的 SuSFS 版本   | 否     |
-| `status reboot_required` | 是否需要重启          | 否     |
-| `status quick`           | 本机状态汇总          | 否     |
-| `mod release`            | 下载上游 release JSON | **是** |
-| `mod update`             | 按给定 URL 安装更新   | **是** |
-| `mod version`            | 本地已安装版本        | 否     |
-| `mod clear-reboot`       | 清除重启标记          | 否     |
-| `mod upstream`           | 读取本次生效的更新源  | 否     |
-| `mod autoload`           | 读取开机加载开关状态  | 否     |
-| `mod autoload on\|off`   | 开启 / 关闭开机加载   | 否     |
-| `log tail [lines]`       | 读取日志尾部          | 否     |
-| `log clear`              | 清空日志              | 否     |
-| `log level`              | 读取日志等级          | 否     |
-| `log set-level <LEVEL>`  | 设置日志等级          | 否     |
+| Command                  | Purpose                            | Network |
+| ------------------------ | ---------------------------------- | ------- |
+| `status installed`       | Whether the driver is loaded       | No      |
+| `status susfs_version`   | Running SuSFS version              | No      |
+| `status reboot_required` | Whether a reboot is required       | No      |
+| `status quick`           | Local status summary               | No      |
+| `mod release`            | Download the upstream release JSON | **Yes** |
+| `mod update`             | Install an update from a given URL | **Yes** |
+| `mod version`            | Locally installed version          | No      |
+| `mod clear-reboot`       | Clear the reboot flag              | No      |
+| `mod upstream`           | Show the effective update source   | No      |
+| `mod autoload`           | Read the boot autoload toggle      | No      |
+| `mod autoload on\|off`   | Enable / disable boot autoload     | No      |
+| `log tail [lines]`       | Read the end of the log            | No      |
+| `log clear`              | Clear the log                      | No      |
+| `log level`              | Read the log level                 | No      |
+| `log set-level <LEVEL>`  | Set the log level                  | No      |
 
-## 5. 命令详情
+## 5. Command details
 
 ### 5.1 `status installed`
 
-```
-stdout: true | false
-exit:   0 已加载 / 1 未加载或无法检测
-```
+| Stream | Value                                            |
+| ------ | ------------------------------------------------ |
+| stdout | `true` \| `false`                                |
+| exit   | `0` loaded; `1` not loaded or cannot be detected |
 
-SuSFS 会把自身模块从 `lsmod` 里隐藏，所以这里不问 `lsmod`，而是执行
-`ksu_susfs show version`：成功即视为可用。`ksu_susfs` 不存在时返回 `false`，
-退出码 1，stderr 里是 `[ERROR] ksu_susfs not found: …`。
+SuSFS hides its own module from `lsmod`, so this does not ask `lsmod`; it runs
+`ksu_susfs show version` and treats success as available. If `ksu_susfs` is
+missing, it returns `false` with exit code 1 and `[ERROR] ksu_susfs not found: …`
+on stderr.
 
 ### 5.2 `status susfs_version`
 
-```
-stdout: 1.5.2        # 已去掉前缀 v
-exit:   0
-```
+| Stream | Value                                            |
+| ------ | ------------------------------------------------ |
+| stdout | `<version>`, format `x.y.z`, leading `v` removed |
+| exit   | `0`                                              |
 
-错误码：`1` 找不到 `ksu_susfs`，`2` 取不到版本。
+Error codes: `1` when `ksu_susfs` is not found, `2` when the version cannot be read.
 
 ### 5.3 `status reboot_required`
 
-```
-stdout: true | false
-exit:   0 需要重启 / 1 不需要
-```
+| Stream | Value                 |
+| ------ | --------------------- |
+| stdout | `true` \| `false`     |
+| exit   | `0` required; `1` not |
 
 ### 5.4 `status quick`
 
-不联网，适合每次界面刷新调用。
+Offline; suitable for every UI refresh.
 
 ```
 android_version=14
@@ -136,93 +135,98 @@ kernel_version=6.1
 gki_branch=14
 loaded=true
 reboot_required=false
-running_version=1.5.2
-local_version=v1.5.2
+running_version=<version>
+local_version=<upstream-tag>
 ko_size=482304
 ```
 
-| key               | 类型           | 说明                                           |
-| ----------------- | -------------- | ---------------------------------------------- |
-| `android_version` | string         | `ro.build.version.release`，取不到为 `unknown` |
-| `kernel_version`  | string         | 内核主次版本，如 `6.1`                         |
-| `gki_branch`      | string         | `uname -r` 里的 `-androidNN-`，取不到为空串    |
-| `loaded`          | `true`/`false` | `ksu_susfs show version` 是否成功              |
-| `reboot_required` | `true`/`false` | 重启标记文件是否存在                           |
-| `running_version` | string         | `ksu_susfs show version`，去 `v` 前缀          |
-| `local_version`   | string         | 已安装的上游 tag，取不到为 `unknown`           |
-| `ko_size`         | integer        | 本地 `.ko` 字节数，不存在为 `0`                |
+| key               | Type           | Description                                           |
+| ----------------- | -------------- | ----------------------------------------------------- |
+| `android_version` | string         | `ro.build.version.release`; `unknown` if unavailable  |
+| `kernel_version`  | string         | Major.minor kernel version, e.g. `6.1`                |
+| `gki_branch`      | string         | The `-androidNN-` part of `uname -r`; empty if absent |
+| `loaded`          | `true`/`false` | Whether `ksu_susfs show version` succeeds             |
+| `reboot_required` | `true`/`false` | Whether the reboot flag file exists                   |
+| `running_version` | string         | `ksu_susfs show version` with the `v` prefix removed  |
+| `local_version`   | string         | Installed upstream tag; `unknown` if unavailable      |
+| `ko_size`         | integer        | Local `.ko` size in bytes; `0` if missing             |
 
-`local_version` 来自上游 `tag_name`，可能带 `v` 前缀；`running_version` 已经去掉前缀。前端比较两者前先统一去掉 `v`。
+`local_version` comes from the upstream `tag_name` and may include a `v` prefix;
+`running_version` already has it stripped. Normalize both by removing the `v`
+before comparing them in the frontend.
 
-`gki_branch` 用来选上游资产：优先用它，取不到时退回 `android_version` 的主号。
+`gki_branch` is used to pick the upstream asset: prefer it, and fall back to the
+major Android version when it is unavailable.
 
-退出码恒为 `0`，单项失败会降级成 `unknown`。
+The exit code is always `0`; individual failures degrade to `unknown`.
 
 ### 5.5 `mod release`
 
-下载上游 release JSON 并原样输出到 stdout。**脚本不解析 JSON**，解析由 WebUI 用 `JSON.parse` 完成。
+Downloads the upstream release JSON and prints it verbatim to stdout. **The script does not parse JSON** — the WebUI parses it with `JSON.parse`.
 
-```
-stdout: {"tag_name":"v2.3.0-r18.5","assets":[...]}
-exit:   0 成功 / 6 拉取失败
+| Stream | Value                         |
+| ------ | ----------------------------- |
+| stdout | Release JSON, verbatim        |
+| exit   | `0` success; `6` fetch failed |
+
+```json
+{ "assets": [], "tag_name": "<tag>" }
 ```
 
-下载失败时 stderr 有 `[ERROR] failed to fetch release info`。临时文件写在 `/data/adb/<id>/release.<pid>.json`，输出后删除。
+On download failure, stderr contains `[ERROR] failed to fetch release info`. The temporary file is written to `/data/adb/<id>/release.<pid>.json` and removed after output.
 
 ### 5.6 `mod update <version> <url> <sha256>`
 
-按调用方给出的资产安装：下载 `.ko`，校验 sha256，写版本文件，创建重启标记。URL 必须是 `https://` 开头，sha256 为 64 位十六进制。
+Installs the asset supplied by the caller: downloads the `.ko`, verifies the sha256, writes the version file, and creates the reboot flag. The URL must start with `https://` and the sha256 must be 64 hex characters.
 
-```
-sh entry.sh mod update v2.3.0-r18.5 \
-    https://github.com/.../susfs_guard_lkm-android15-6.6.ko \
-    7c2a274798fc6afd32e74d20321065612d8d656185fa91764dadcdd29f25f372
-stdout: (空)
-stderr: [..] [INFO] download [...]: https://... -> /data/adb/<id>/mod/susfs_guard_lkm.ko
-        [..] [INFO] update installed: v2.3.0-r18.5 (reboot to take effect)
-exit:   0
+```sh
+sh entry.sh mod update "<version>" "<url>" "<sha256>"
 ```
 
-| 退出码 | 含义                          |
-| ------ | ----------------------------- |
-| `0`    | 安装成功，**重启后生效**      |
-| `1`    | 参数缺失，或 URL 不是 https   |
-| `2`    | 下载失败                      |
-| `3`    | sha256 格式错误，或校验不匹配 |
-| `4`    | 写入失败（目录、权限、磁盘）  |
+| Stream | Value                                                                                                              |
+| ------ | ------------------------------------------------------------------------------------------------------------------ |
+| stdout | Empty                                                                                                              |
+| stderr | `[..] [INFO] download [...]: <url> -> <path>`<br>`[..] [INFO] update installed: <version> (reboot to take effect)` |
 
-失败时 stderr 最后一行通常以 `[ERROR]` 开头，可以直接展示。
+| Exit code | Meaning                                               |
+| --------- | ----------------------------------------------------- |
+| `0`       | Installed successfully, **takes effect after reboot** |
+| `1`       | Missing argument, or URL is not https                 |
+| `2`       | Download failed                                       |
+| `3`       | Malformed sha256, or checksum mismatch                |
+| `4`       | Write failed (directory, permissions, disk)           |
+
+On failure, the last stderr line usually starts with `[ERROR]` and can be shown directly.
 
 ### 5.7 `mod version`
 
-```
-stdout: v1.5.2
-exit:   0
-```
-
-本地版本文件缺失时退出码为 `3`。
+| Stream | Value                                                       |
+| ------ | ----------------------------------------------------------- |
+| stdout | Local version as stored (the upstream tag; may include `v`) |
+| exit   | `0` success; `3` local version file is missing              |
 
 ### 5.8 `mod clear-reboot`
 
-```
-exit: 0 成功 / 1 删除失败
-```
+| Stream | Value                          |
+| ------ | ------------------------------ |
+| stdout | Empty                          |
+| exit   | `0` success; `1` delete failed |
 
 ### 5.9 `log tail [lines]`
 
-读取日志尾部，输出纯文本，不是 `key=value`。
+Reads the end of the log and prints plain text, not `key=value`.
 
 ```
 sh entry.sh log tail 200
 ```
 
-| 参数    | 默认  | 说明                                |
-| ------- | ----- | ----------------------------------- |
-| `lines` | `200` | 返回行数；非数字或 `0` 时回退为 200 |
+| Argument | Default | Description                                           |
+| -------- | ------- | ----------------------------------------------------- |
+| `lines`  | `200`   | Number of lines; non-numeric or `0` falls back to 200 |
 
-- 存在轮转文件 `module.log.1` 时，会先拼上它的内容再截取，避免刚轮转完看起来是空日志。
-- 日志文件不存在时输出为空，退出码仍是 `0`。
-- 输出固定按时间正序。WebUI 的倒序显示是前端自己翻的，脚本不提供排序参数。
+- When the rotated file `module.log.1` exists, its content is prepended before tailing so a freshly rotated log does not look empty.
+- If the log file does not exist, the output is empty and the exit code is still `0`.
+- Output is always in chronological order. The WebUI reverses it for display; the script has no sort option.
 
 ```
 [2026-10-27 12:00:00] [INFO] download [curl]: https://... -> /data/adb/...
@@ -231,38 +235,41 @@ sh entry.sh log tail 200
 
 ### 5.10 `log clear`
 
-清空 `module.log` 并删掉 `module.log.1`。退出码恒为 `0`。
+Truncates `module.log` and removes `module.log.1`. The exit code is always `0`.
 
 ### 5.11 `log level`
 
-```
-stdout: INFO
-exit:   0
-```
+| Stream | Value                                              |
+| ------ | -------------------------------------------------- |
+| stdout | Current level: `DEBUG` / `INFO` / `WARN` / `ERROR` |
+| exit   | `0`                                                |
 
-取值：`DEBUG` | `INFO` | `WARN` | `ERROR`。
+Values: `DEBUG` | `INFO` | `WARN` | `ERROR`.
 
 ### 5.12 `log set-level <LEVEL>`
 
-大小写不敏感，写入 `/data/adb/<id>/config`：
+Case-insensitive; writes to `/data/adb/<id>/config`:
 
-```
-sh entry.sh log set-level debug
-stdout: DEBUG
-exit:   0
+```sh
+sh entry.sh log set-level "<LEVEL>"
 ```
 
-| 退出码 | 含义                          |
-| ------ | ----------------------------- |
-| `0`    | 成功，stdout 为规范化后的等级 |
-| `1`    | 参数不是合法等级              |
-| `2`    | 写配置文件失败                |
+| Stream | Value                                  |
+| ------ | -------------------------------------- |
+| stdout | Normalized level, e.g. `DEBUG`         |
+| stderr | `[..] [INFO] log level set to <LEVEL>` |
 
-新等级在下一条命令执行时生效，当前进程不受影响。环境变量 `LOG_LEVEL` 的优先级高于配置文件。
+| Exit code | Meaning                                 |
+| --------- | --------------------------------------- |
+| `0`       | Success; stdout is the normalized level |
+| `1`       | Argument is not a valid level           |
+| `2`       | Failed to write the config file         |
+
+The new level applies to the next command; the current process is unaffected. The `LOG_LEVEL` environment variable takes precedence over the config file.
 
 ### 5.13 `mod upstream`
 
-读取本次调用实际生效的更新源。配置由 WebUI 存在 `localStorage`，调脚本时通过环境变量传进来，脚本本身不读写上游配置。
+Shows the update source actually in effect for this call. The setting is stored in the WebUI's `localStorage` and passed to the script through environment variables; the script itself never reads or writes upstream settings.
 
 ```
 upstream=https://api.github.com/repos/inforcqb/susfs4ksu-lkm/releases/latest
@@ -270,115 +277,111 @@ mirror=
 official=https://api.github.com/repos/inforcqb/susfs4ksu-lkm/releases/latest
 ```
 
-| key        | 说明                           |
-| ---------- | ------------------------------ |
-| `upstream` | 本次生效的 Releases API 地址   |
-| `mirror`   | 驱动下载加速前缀，空串表示直连 |
-| `official` | 官方地址（默认值）             |
+| key        | Description                                |
+| ---------- | ------------------------------------------ |
+| `upstream` | Releases API URL in effect for this call   |
+| `mirror`   | Driver download prefix; empty means direct |
+| `official` | Official URL (the default)                 |
 
 ### 5.14 `mod autoload`
 
-控制开机时用哪种方式加载已安装的驱动。开关状态就是
-`/data/adb/post-fs-data.d/<id>.sh` 是否存在，不写配置文件。
+Controls how the installed driver is loaded at boot. The toggle state is simply
+whether `/data/adb/post-fs-data.d/<id>.sh` exists; no config file is written.
 
-- 关闭（默认）：模块目录的 `post-fs-data.sh` 由 KernelSU 执行。
-- 开启：先把脚本复制到 `post-fs-data.d/<id>.sh`，再把模块里的
-  `post-fs-data.sh` 改名为 `.post-fs-data.sh`，避免同一脚本执行两次。
-- 关闭：删除副本，把 `.post-fs-data.sh` 改回 `post-fs-data.sh`。
+- Off (default): the module's `post-fs-data.sh` is executed by KernelSU.
+- On: copies the script to `post-fs-data.d/<id>.sh`, then renames the module's
+  `post-fs-data.sh` to `.post-fs-data.sh` so the same script does not run twice.
+- Off again: deletes the copy and renames `.post-fs-data.sh` back to `post-fs-data.sh`.
 
-```
-sh entry.sh mod autoload        # 读取状态
-stdout: enabled=true | enabled=false
-
-sh entry.sh mod autoload on     # 安装优先副本并隐藏自带脚本
-sh entry.sh mod autoload off    # 删除副本并恢复自带脚本
-stdout: enabled=true | enabled=false
+```sh
+sh entry.sh mod autoload     # read state
+sh entry.sh mod autoload on  # install the priority copy and hide the bundled script
+sh entry.sh mod autoload off # remove the copy and restore the bundled script
 ```
 
-| 退出码 | 含义                         |
-| ------ | ---------------------------- |
-| `0`    | 成功                         |
-| `1`    | 参数不是 `on` / `off`        |
-| `4`    | 复制、改名、chmod 或删除失败 |
+| Stream | Value                                                                                   |
+| ------ | --------------------------------------------------------------------------------------- |
+| stdout | `enabled=true` \| `enabled=false`                                                       |
+| exit   | `0` success; `1` argument is not `on` / `off`; `4` copy, rename, chmod or delete failed |
 
-卸载模块时 `uninstall.sh` 会删掉这个脚本，避免残留。
+`uninstall.sh` removes this script so it does not linger after the module is uninstalled.
 
-### 5.15 上游相关环境变量
+### 5.15 Upstream environment variables
 
-| 变量              | 说明                                                                               |
-| ----------------- | ---------------------------------------------------------------------------------- |
-| `UPSTREAM_API`    | Releases API 地址；不是 `https://` 开头时回退为官方地址                            |
-| `UPSTREAM_MIRROR` | 驱动下载前缀（如 `https://ghfast.top/`），只作用于 `.ko` 的 `browser_download_url` |
+| Variable          | Description                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `UPSTREAM_API`    | Releases API URL; falls back to the official URL when it does not start with `https://`           |
+| `UPSTREAM_MIRROR` | Driver download prefix (e.g. `https://ghfast.top/`); only applied to `.ko` `browser_download_url` |
 
-ghfast.top 只代理文件，不代理 `api.github.com`。所以「国内加速」加速的只是驱动下载，版本信息仍从官方 API 取。
+ghfast.top only proxies files, not `api.github.com`. So the "fast mirror" option only accelerates driver downloads; release info still comes from the official API.
 
-调用示例：
+Example:
 
 ```sh
 UPSTREAM_API='https://api.github.com/repos/inforcqb/susfs4ksu-lkm/releases/latest' \
-UPSTREAM_MIRROR='https://ghfast.top/' \
-sh entry.sh mod check
+    UPSTREAM_MIRROR='https://ghfast.top/' \
+    sh entry.sh mod release
 ```
 
-### 5.16 日志等级过滤
+### 5.16 Log level filtering
 
-`log <level> <message>` 只输出大于等于当前等级的日志：
+`log <level> <message>` only prints messages at or above the current level:
 
-| 等级    | 数值 |
-| ------- | ---- |
-| `DEBUG` | 0    |
-| `INFO`  | 1    |
-| `WARN`  | 2    |
-| `ERROR` | 3    |
+| Level   | Value |
+| ------- | ----- |
+| `DEBUG` | 0     |
+| `INFO`  | 1     |
+| `WARN`  | 2     |
+| `ERROR` | 3     |
 
-## 6. 错误码汇总
+## 6. Error code summary
 
 ### download.sh
 
-| 码  | 含义               |
-| --- | ------------------ |
-| 1   | 缺少参数           |
-| 2   | 没有可用的下载工具 |
-| 3   | 无法创建目录       |
-| 4   | 网络请求失败       |
-| 5   | 下载内容为空       |
-| 6   | 写入失败           |
+| Code | Meaning                     |
+| ---- | --------------------------- |
+| 1    | Missing argument            |
+| 2    | No download tool available  |
+| 3    | Cannot create directory     |
+| 4    | Network request failed      |
+| 5    | Downloaded content is empty |
+| 6    | Write failed                |
 
 ### upstream.sh
 
-| 码  | 含义         |
-| --- | ------------ |
-| 3   | 本地文件缺失 |
-| 6   | 拉取上游失败 |
+| Code | Meaning                  |
+| ---- | ------------------------ |
+| 3    | Local file missing       |
+| 6    | Failed to fetch upstream |
 
 ### entries/mod.sh
 
-| 码  | 含义                  |
-| --- | --------------------- |
-| 1   | 参数缺失或 URL 非法   |
-| 2   | 下载失败              |
-| 3   | sha256 非法或校验失败 |
-| 4   | 写入失败              |
+| Code | Meaning                             |
+| ---- | ----------------------------------- |
+| 1    | Missing argument or invalid URL     |
+| 2    | Download failed                     |
+| 3    | Invalid sha256 or checksum mismatch |
+| 4    | Write failed                        |
 
 ### entries/status.sh
 
-| 码  | 含义           |
-| --- | -------------- |
-| 1   | 依赖工具不可用 |
-| 2   | 取版本失败     |
+| Code | Meaning                   |
+| ---- | ------------------------- |
+| 1    | Required tool unavailable |
+| 2    | Failed to read version    |
 
 ### entries/log.sh
 
-| 码  | 含义     |
-| --- | -------- |
-| 1   | 参数错误 |
-| 2   | 写入失败 |
+| Code | Meaning          |
+| ---- | ---------------- |
+| 1    | Invalid argument |
+| 2    | Write failed     |
 
-## 7. 对接注意
+## 7. Integration notes
 
-1. 状态卡用 `status quick`，不联网，适合每次刷新。
-2. 更新检测走 `mod release` + 前端 `JSON.parse`：用 `tag_name` 对比 `local_version`，用 `gki_branch` / `kernel_version` 匹配资产名 `susfs_guard_lkm-android<branch>-<kernel>.ko`。
-3. `mod update` 需要显式传版本、URL、sha256；返回 0 只代表文件装好了，要把「重启后生效」说清楚，再刷新状态卡读 `reboot_required`。
-4. 日志面板用 `log tail`，纯文本渲染，清空后立刻重新拉。
-5. 改完日志等级要提示「下次执行生效」，当前日志不会马上变。
-6. `exec()` 可能因为 SELinux、权限或模块被禁用直接失败，`errno !== 0` 必须处理。
+1. Use `status quick` for the status card; it is offline and cheap enough for every refresh.
+2. Update detection is `mod release` + frontend `JSON.parse`: compare `tag_name` with `local_version`, and match the asset name `susfs_guard_lkm-android<branch>-<kernel>.ko` using `gki_branch` / `kernel_version`.
+3. `mod update` needs explicit version, URL and sha256. Exit code 0 only means the file is installed — make clear that it takes effect after reboot, then refresh the status card to read `reboot_required`.
+4. Render the log panel from `log tail` as plain text, and refetch immediately after clearing.
+5. After changing the log level, tell the user it applies to the next run; the current log does not change immediately.
+6. `exec()` can fail outright due to SELinux, permissions or a disabled module; `errno !== 0` must be handled.
