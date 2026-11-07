@@ -17,6 +17,7 @@
     "license": "GPL-2.0-only",
     "scripts": {
         "dev": "pnpm --filter webui run dev",
+        "preview": "pnpm --filter webui run preview",
         "build": "jiti scripts/build.ts",
         "pack": "jiti scripts/pack.ts",
         "test": "bash tests/run.sh",

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -34,14 +34,35 @@
         <symbol id="icon-setting" viewBox="0 -960 960 960">
             <path d="M433-80q-27 0-46.5-18T363-142l-9-66q-13-5-24.5-12T307-235l-62 26q-25 11-50 2t-39-32l-47-82q-14-23-8-49t27-43l53-40q-1-7-1-13.5v-27q0-6.5 1-13.5l-53-40q-21-17-27-43t8-49l47-82q14-23 39-32t50 2l62 26q11-8 23-15t24-12l9-66q4-26 23.5-44t46.5-18h94q27 0 46.5 18t23.5 44l9 66q13 5 24.5 12t22.5 15l62-26q25-11 50-2t39 32l47 82q14 23 8 49t-27 43l-53 40q1 7 1 13.5v27q0 6.5-2 13.5l53 40q21 17 27 43t-8 49l-48 82q-14 23-39 32t-50-2l-60-26q-11 8-23 15t-24 12l-9 66q-4 26-23.5 44T527-80h-94Zm49-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Z"/>
         </symbol>
+        <symbol id="icon-language" viewBox="0 0 24 24">
+            <path d="M15.08,18.95l-0.85,2.43q-0.1,0.27-0.35,0.45T13.33,22q-0.5,0-0.81-0.41q-0.31-0.41-0.11-0.91l3.8-10.05q0.13-0.28 0.38-0.45T17.13,10h0.75q0.3,0 0.55,0.17t0.38,0.45L22.6,20.7q0.2,0.48-0.1,0.89T21.7,22q-0.33,0-0.56-0.18t-0.36-0.47l-0.85-2.4H15.08ZM9.05,13.98L4.7,18.3q-0.28,0.27-0.69,0.29T3.3,18.3q-0.27-0.28-0.27-0.7T3.3,16.9l4.35-4.35q-0.88-0.88-1.59-2T4.75,8h2.1q0.5,0.97 1,1.7t1.2,1.45q0.82-0.82 1.71-2.31T12.1,6H2Q1.58,6 1.29,5.71Q1,5.43 1,5T1.29,4.29T2,4H8V3Q8,2.57 8.29,2.29Q8.58,2 9,2Q9.43,2 9.71,2.29T10,3V4h6q0.43,0 0.71,0.29T17,5T16.71,5.71T16,6H14.1q-0.53,1.8-1.58,3.7t-2.07,2.9l2.4,2.45L12.1,17.1L9.05,13.98ZM15.7,17.2h3.6l-1.8-5.1l-1.8,5.1Z"/>
+        </symbol>
+        <symbol id="icon-logo" viewBox="0 0 1460 1460" fill="none">
+            <path d="M23 778L23 970L715.82 1370V1178L23 778Z" fill="currentColor"/>
+            <path d="M743.533 1178V1370L1436.35 970V778L743.533 1178Z" fill="currentColor"/>
+            <path d="M355.554 314L355.554 730L715.82 938V522L355.554 314Z" fill="currentColor"/>
+            <path d="M1103.52 694V730L1059.93 755.17M1103.52 730L1059.93 704.83M754.756 931.36L798.352 906.19M1059.93 272.83L1103.52 298V334M1103.52 298L1059.93 323.17M754.756 96.6395L798.352 121.81M754.756 499.36L798.352 474.19M754.756 528.639L798.352 553.809M972.735 805.51L885.544 855.85M1103.52 406V478M1103.52 550V622M972.735 654.49L885.544 604.15M972.735 222.49L885.544 172.15M972.735 373.51L885.544 423.85" stroke-width="48" stroke-linecap="round" stroke-linejoin="round" stroke="currentColor"/>
+            <path d="M355.554 314L355.554 730L715.82 938V522L355.554 314Z" fill="currentColor"/>
+            <path d="M715.82 490L369.41 290L715.82 90V490Z" fill="currentColor"/>
+            <path d="M327.34 713.831L258.107 753.804C257.868 753.942 257.868 754.166 258.107 754.304L729.224 1026.3C729.463 1026.44 729.851 1026.44 730.09 1026.3L1201.21 754.304C1201.45 754.166 1201.45 753.942 1201.21 753.804L1132.01 713.853V585.844L1422.93 753.804C1423.16 753.942 1423.16 754.166 1422.93 754.304L730.105 1154.3C729.866 1154.44 729.478 1154.44 729.239 1154.3L36.4185 754.304C36.1801 754.166 36.1801 753.942 36.4185 753.804L327.34 585.841V713.831Z" fill="currentColor"/>
+        </symbol>
     </svg>
+
+    <div class="loading" id="loading" aria-hidden="true"></div>
 
     <sd-app>
         <header class="page-head">
-            <h1>SusDock</h1>
+            <div class="brand">
+                <svg class="logo" aria-hidden="true"><use href="#icon-logo"></use></svg>
+                <h1>SusDock</h1>
+            </div>
             <div class="page-meta">
                 <span class="version" id="version"></span>
-                <button class="theme-btn" type="button" id="theme" title="切换主题" aria-label="切换主题">
+                <label class="lang-row">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-language"></use></svg>
+                    <select class="select" id="language" data-i18n-aria-label="language.title"></select>
+                </label>
+                <button class="theme-btn" type="button" id="theme" title="Toggle theme" aria-label="Toggle theme">
                     <svg class="icon icon-dark" aria-hidden="true"><use href="#icon-dark"></use></svg>
                     <svg class="icon icon-light" aria-hidden="true"><use href="#icon-light"></use></svg>
                 </button>
@@ -50,33 +71,33 @@
 
         <section class="card">
             <div class="card-head">
-                <h2 data-i18n="status.title">状态</h2>
-                <button class="btn ghost small" type="button" id="refresh-status" data-i18n="action.refresh">刷新</button>
+                <h2 data-i18n="status.title">Status</h2>
+                <button class="btn ghost small" type="button" id="refresh-status" data-i18n="action.refresh">Refresh</button>
             </div>
 
             <sd-status-card>
                 <div class="status-head">
-                    <sd-badge id="state-badge">读取中…</sd-badge>
-                    <sd-badge id="reboot-badge" tone="new" hidden data-i18n="state.reboot">需重启</sd-badge>
+                    <sd-badge id="state-badge">Reading…</sd-badge>
+                    <sd-badge id="reboot-badge" tone="new" hidden data-i18n="state.reboot">Reboot required</sd-badge>
                 </div>
                 <sd-row data-field="android">
                     <span class="row-k">Android</span>
                     <span class="row-v">-</span>
                 </sd-row>
                 <sd-row data-field="kernel">
-                    <span class="row-k" data-i18n="field.kernel">内核版本</span>
+                    <span class="row-k" data-i18n="field.kernel">Kernel version</span>
                     <span class="row-v">-</span>
                 </sd-row>
                 <sd-row data-field="running">
-                    <span class="row-k" data-i18n="field.running">运行版本</span>
+                    <span class="row-k" data-i18n="field.running">Loaded version</span>
                     <span class="row-v">-</span>
                 </sd-row>
                 <sd-row data-field="local">
-                    <span class="row-k" data-i18n="field.local">本地版本</span>
+                    <span class="row-k" data-i18n="field.local">Local version</span>
                     <span class="row-v">-</span>
                 </sd-row>
                 <sd-row data-field="koSize">
-                    <span class="row-k" data-i18n="field.koSize">驱动大小</span>
+                    <span class="row-k" data-i18n="field.koSize">Driver size</span>
                     <span class="row-v">-</span>
                 </sd-row>
             </sd-status-card>
@@ -84,25 +105,25 @@
 
         <section class="card">
             <div class="card-head">
-                <h2 data-i18n="autoload.title">开机加载</h2>
+                <h2 data-i18n="autoload.title">Boot loading</h2>
             </div>
 
             <sd-autoload-card>
                 <label class="switch-row">
                     <span class="switch-text">
-                        <span class="switch-k" data-i18n="autoload.key">开机优先加载驱动</span>
-                        <span class="switch-hint" data-i18n="autoload.hint">默认用模块自带的 post-fs-data.sh；开启后改用 /data/adb/post-fs-data.d/ 优先加载</span>
+                        <span class="switch-k" data-i18n="autoload.key">Load the driver early at boot</span>
+                        <span class="switch-hint" data-i18n="autoload.hint">By default the module's own post-fs-data.sh is used; when enabled, /data/adb/post-fs-data.d/ loads it earlier</span>
                     </span>
                     <input class="switch" id="autoload-toggle" type="checkbox" role="switch">
                 </label>
-                <p class="meta" id="autoload-meta" aria-live="polite">读取中…</p>
+                <p class="meta" id="autoload-meta" aria-live="polite">Reading…</p>
             </sd-autoload-card>
         </section>
 
         <section class="card">
             <div class="card-head">
-                <h2 data-i18n="update.title">检测更新</h2>
-                <button class="icon-btn" type="button" id="upstream-open" data-i18n-title="update.settings" data-i18n-aria-label="update.settings" title="更新源设置" aria-label="更新源设置">
+                <h2 data-i18n="update.title">Check for updates</h2>
+                <button class="icon-btn" type="button" id="upstream-open" data-i18n-title="update.settings" data-i18n-aria-label="update.settings" title="Update source settings" aria-label="Update source settings">
                     <svg class="icon" aria-hidden="true"><use href="#icon-setting"></use></svg>
                 </button>
             </div>
@@ -110,7 +131,7 @@
             <sd-update-card>
                 <div data-view="idle">
                     <div class="update-actions">
-                        <button class="btn" type="button" data-action="check" data-i18n="update.check">检测更新</button>
+                        <button class="btn" type="button" data-action="check" data-i18n="update.check">Check for updates</button>
                     </div>
                 </div>
 
@@ -127,31 +148,31 @@
 
                 <div data-view="available" hidden>
                     <div class="update-head">
-                        <sd-badge tone="new" data-i18n="update.available">发现新版本</sd-badge>
+                        <sd-badge tone="new" data-i18n="update.available">New version found</sd-badge>
                         <span class="tag" data-role="available-tag"></span>
                     </div>
                     <div class="update-actions">
-                        <button class="btn primary" type="button" data-action="update" data-i18n="update.apply">更新</button>
+                        <button class="btn primary" type="button" data-action="update" data-i18n="update.apply">Update</button>
                     </div>
                 </div>
 
                 <div data-view="current" hidden>
                     <div class="update-head">
-                        <sd-badge tone="ok" data-i18n="update.upToDate">已是最新版本</sd-badge>
+                        <sd-badge tone="ok" data-i18n="update.upToDate">Up to date</sd-badge>
                         <span class="tag" data-role="current-tag"></span>
                     </div>
                     <div class="update-actions">
-                        <button class="btn ghost" type="button" data-action="check" data-i18n="update.again">再查一次</button>
+                        <button class="btn ghost" type="button" data-action="check" data-i18n="update.again">Check again</button>
                     </div>
                 </div>
 
                 <div data-view="failed" hidden>
                     <div class="update-head">
-                        <sd-badge tone="fail" data-i18n="update.failed">更新失败</sd-badge>
+                        <sd-badge tone="fail" data-i18n="update.failed">Update failed</sd-badge>
                     </div>
                     <p class="empty" data-role="reason"></p>
                     <div class="update-actions">
-                        <button class="btn primary" type="button" data-action="update" data-i18n="update.retry">重试</button>
+                        <button class="btn primary" type="button" data-action="update" data-i18n="update.retry">Retry</button>
                     </div>
                     <pre class="log" data-role="log"></pre>
                 </div>
@@ -159,7 +180,7 @@
                 <div data-view="note" hidden>
                     <p class="empty" data-role="note"></p>
                     <div class="update-actions">
-                        <button class="btn ghost" type="button" data-action="check" data-i18n="update.recheck">重新检测</button>
+                        <button class="btn ghost" type="button" data-action="check" data-i18n="update.recheck">Re-check</button>
                     </div>
                 </div>
             </sd-update-card>
@@ -167,13 +188,13 @@
 
         <section class="card">
             <div class="card-head">
-                <h2 data-i18n="log.title">日志</h2>
+                <h2 data-i18n="log.title">Log</h2>
             </div>
 
             <sd-log-panel>
                 <div class="toolbar">
                     <label class="level">
-                        <span data-i18n="log.level">等级</span>
+                        <span data-i18n="log.level">Level</span>
                         <select class="select" id="log-level">
                             <option value="DEBUG">DEBUG</option>
                             <option value="INFO" selected>INFO</option>
@@ -182,34 +203,34 @@
                         </select>
                     </label>
                     <div class="tools">
-                        <button class="btn ghost small" type="button" id="log-auto">自动刷新：开</button>
-                        <button class="btn ghost small" type="button" id="log-order">排序：正序</button>
-                        <button class="btn ghost small" type="button" id="log-refresh" data-i18n="action.refresh">刷新</button>
-                        <button class="btn ghost small" type="button" id="log-clear" data-i18n="log.clear">清空</button>
+                        <button class="btn ghost small" type="button" id="log-auto">Auto-refresh: on</button>
+                        <button class="btn ghost small" type="button" id="log-order">Order: oldest first</button>
+                        <button class="btn ghost small" type="button" id="log-refresh" data-i18n="action.refresh">Refresh</button>
+                        <button class="btn ghost small" type="button" id="log-clear" data-i18n="log.clear">Clear</button>
                     </div>
                 </div>
                 <pre class="log" id="log-output"></pre>
-                <p class="meta" id="log-meta">读取中…</p>
+                <p class="meta" id="log-meta">Reading…</p>
             </sd-log-panel>
         </section>
 
         <sd-upstream-dialog>
             <dialog class="modal" id="upstream-dialog">
                 <div class="modal-head">
-                    <h2 data-i18n="upstream.title">更新源</h2>
-                    <button class="icon-btn modal-close" type="button" id="upstream-close" data-i18n-title="upstream.close" data-i18n-aria-label="upstream.close" title="关闭" aria-label="关闭">✕</button>
+                    <h2 data-i18n="upstream.title">Update source</h2>
+                    <button class="icon-btn modal-close" type="button" id="upstream-close" data-i18n-title="upstream.close" data-i18n-aria-label="upstream.close" title="Close" aria-label="Close">✕</button>
                 </div>
 
-                <p class="modal-hint" data-i18n="upstream.hint">检测更新与下载驱动时使用这个地址。</p>
+                <p class="modal-hint" data-i18n="upstream.hint">Used for update checks and driver downloads.</p>
 
                 <div class="preset-row">
-                    <button class="btn ghost small" type="button" data-preset="official" data-i18n="upstream.official">官方</button>
-                    <button class="btn ghost small" type="button" data-preset="mirror" data-i18n="upstream.mirror">国内加速</button>
+                    <button class="btn ghost small" type="button" data-preset="official" data-i18n="upstream.official">Official</button>
+                    <button class="btn ghost small" type="button" data-preset="mirror" data-i18n="upstream.mirror">CN mirror</button>
                 </div>
 
                 <div class="input-row">
                     <input class="input" id="upstream-input" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://api.github.com/…">
-                    <button class="icon-btn" type="button" id="upstream-clear" data-i18n-title="upstream.clear" data-i18n-aria-label="upstream.clear" title="清空" aria-label="清空">
+                    <button class="icon-btn" type="button" id="upstream-clear" data-i18n-title="upstream.clear" data-i18n-aria-label="upstream.clear" title="Clear" aria-label="Clear">
                         <svg class="icon" aria-hidden="true"><use href="#icon-backspace"></use></svg>
                     </button>
                 </div>
@@ -218,19 +239,11 @@
                 <p class="modal-error" id="upstream-error" hidden></p>
 
                 <div class="modal-actions">
-                    <button class="btn ghost" type="button" id="upstream-cancel" data-i18n="upstream.cancel">取消</button>
-                    <button class="btn primary" type="button" id="upstream-save" data-i18n="upstream.save">保存</button>
+                    <button class="btn ghost" type="button" id="upstream-cancel" data-i18n="upstream.cancel">Cancel</button>
+                    <button class="btn primary" type="button" id="upstream-save" data-i18n="upstream.save">Save</button>
                 </div>
             </dialog>
         </sd-upstream-dialog>
-
-        <footer class="page-foot">
-            <label class="lang-row">
-                <span data-i18n="language.title">语言</span>
-                <!-- 选项由 sd-app 按 i18n/LOCALES 生成，这里只留占位 -->
-                <select class="select" id="language" data-i18n-aria-label="language.title"></select>
-            </label>
-        </footer>
     </sd-app>
 
     <script type="module" src="/src/main.ts"></script>
